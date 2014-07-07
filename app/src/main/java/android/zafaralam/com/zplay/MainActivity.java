@@ -9,6 +9,7 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
 import android.os.IBinder;
@@ -27,7 +28,9 @@ import java.util.Comparator;
 import java.util.List;
 
 
-public class MainActivity extends Activity implements MediaPlayerControl{
+public class MainActivity extends Activity implements MediaPlayerControl,AdapterView.OnItemClickListener{
+
+
 
     //song list variables
     private ArrayList<Song> songList;
@@ -65,9 +68,15 @@ public class MainActivity extends Activity implements MediaPlayerControl{
         //create and set adapter
         SongAdapter songAdt = new SongAdapter(this, songList);
         songView.setAdapter(songAdt);
+       songView.setOnItemClickListener(this);
 
         //setup controller
         setController();
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        songPicked(view);
     }
 
     //connect to the service
