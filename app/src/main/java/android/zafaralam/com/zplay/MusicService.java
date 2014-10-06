@@ -25,7 +25,7 @@ import android.app.PendingIntent;
 public class MusicService extends Service implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener{
-
+    private static final String TAG = MusicService.class.getSimpleName();
     //media player
     private MediaPlayer player;
     //song list
@@ -111,7 +111,7 @@ public class MusicService extends Service implements
             player.setDataSource(getApplicationContext(), trackUri);
         }
         catch(Exception e){
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
+            Log.e(TAG, "Error setting data source", e);
         }
         player.prepareAsync();
     }
@@ -132,7 +132,7 @@ public class MusicService extends Service implements
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.v("MUSIC PLAYER", "Playback Error");
+        Log.v(TAG, "Playback Error");
         mp.reset();
         return false;
     }

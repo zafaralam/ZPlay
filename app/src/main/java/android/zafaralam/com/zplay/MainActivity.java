@@ -5,7 +5,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,34 +16,29 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.view.MenuItem;
-import android.view.View;
+import android.zafaralam.com.zplay.adapter.SongAdapter;
 import android.zafaralam.com.zplay.modal.Song;
 import android.zafaralam.com.zplay.MusicService.MusicBinder;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 
 public class MainActivity extends Activity implements MediaPlayerControl,AdapterView.OnItemClickListener{
 
-
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     //song list variables
     private ArrayList<Song> songList;
     private ListView songView;
-
     //service
     private MusicService musicSrv;
     private Intent playIntent;
     //binding
     private boolean musicBound=false;
-
     //controller
     private MusicController controller;
-
     //activity and playback pause flags
     private boolean paused=false, playbackPaused=false;
 
@@ -74,30 +68,6 @@ public class MainActivity extends Activity implements MediaPlayerControl,Adapter
         setController();
     }
 
-    @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        songPicked(view);
-    }
-
-    //connect to the service
-    private ServiceConnection musicConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicBinder binder = (MusicBinder)service;
-            //get service
-            musicSrv = binder.getService();
-            //pass list
-            musicSrv.setList(songList);
-            musicBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
-        }
-    };
-
     //start and bind the service when the activity starts
     @Override
     protected void onStart() {
@@ -109,15 +79,32 @@ public class MainActivity extends Activity implements MediaPlayerControl,Adapter
         }
     }
 
-    //user song select
-    public void songPicked(View view){
-        musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        musicSrv.playSong();
-        if(playbackPaused){
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(paused){
             setController();
-            playbackPaused=false;
+            paused=false;
         }
-        controller.show(0);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        paused=true;
+    }
+
+    @Override
+    protected void onStop() {
+        controller.hide();
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopService(playIntent);
+        musicSrv=null;
+        super.onDestroy();
     }
 
     @Override
@@ -141,6 +128,11 @@ public class MainActivity extends Activity implements MediaPlayerControl,Adapter
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        songPicked(view);
     }
 
     //method to retrieve song info from device
@@ -168,6 +160,75 @@ public class MainActivity extends Activity implements MediaPlayerControl,Adapter
             while (musicCursor.moveToNext());
         }
     }
+
+    //user song select
+    public void songPicked(View view){
+        musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
+        musicSrv.playSong();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    //set the controller up
+    private void setController(){
+        controller = new MusicController(this);
+        //set previous and next button listeners
+        controller.setPrevNextListeners(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playNext();
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPrev();
+            }
+        });
+        //set and show
+        controller.setMediaPlayer(this);
+        controller.setAnchorView(findViewById(R.id.song_list));
+        controller.setEnabled(true);
+    }
+
+    private void playNext(){
+        musicSrv.playNext();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    private void playPrev(){
+        musicSrv.playPrev();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    //connect to the service
+    private ServiceConnection musicConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicBinder binder = (MusicBinder)service;
+            //get service
+            musicSrv = binder.getService();
+            //pass list
+            musicSrv.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     @Override
     public boolean canPause() {
@@ -229,72 +290,5 @@ public class MainActivity extends Activity implements MediaPlayerControl,Adapter
     @Override
     public void start() {
         musicSrv.go();
-    }
-
-    //set the controller up
-    private void setController(){
-        controller = new MusicController(this);
-        //set previous and next button listeners
-        controller.setPrevNextListeners(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playNext();
-            }
-        }, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playPrev();
-            }
-        });
-        //set and show
-        controller.setMediaPlayer(this);
-        controller.setAnchorView(findViewById(R.id.song_list));
-        controller.setEnabled(true);
-    }
-
-    private void playNext(){
-        musicSrv.playNext();
-        if(playbackPaused){
-            setController();
-            playbackPaused=false;
-        }
-        controller.show(0);
-    }
-
-    private void playPrev(){
-        musicSrv.playPrev();
-        if(playbackPaused){
-            setController();
-            playbackPaused=false;
-        }
-        controller.show(0);
-    }
-
-    @Override
-    protected void onPause(){
-        super.onPause();
-        paused=true;
-    }
-
-    @Override
-    protected void onResume(){
-        super.onResume();
-        if(paused){
-            setController();
-            paused=false;
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        controller.hide();
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        stopService(playIntent);
-        musicSrv=null;
-        super.onDestroy();
     }
 }
