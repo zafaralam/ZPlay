@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle" >
-
-    <!-- view background color -->
-    <solid android:color="@color/song_list_item_bg" >
-    </solid>
-
-    <!-- view border color and width -->
-    <stroke
-        android:width="@dimen/song_list_item_border_width"
-        android:color="@color/song_list_item_border"
-        >
-    </stroke>
-
-    <!-- Here is the corner radius -->
-    <corners android:radius="@dimen/song_list_item_corner_radius" >
-    </corners>
-
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <!-- view background color -->
+            <solid android:color="@color/song_list_item_border" />
+        </shape>
+    </item>
+    <item android:top="@dimen/song_list_item_border_width">
+        <shape android:shape="rectangle">
+            <!-- view background color -->
+            <solid android:color="@color/song_list_item_bg" />
+        </shape>
+    </item>
+</layer-list>
